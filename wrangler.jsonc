@@ -12,6 +12,19 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "arcade-monitor-db",
+      "database_id": "b3920080-2a53-4feb-8ac4-b96dffcb8120"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "YOUTUBE_CACHE",
+      "id": "fd82c1b92dcd440cb2bb6ab8e9da32f6"
+    }
   ]
   /**
    * Smart Placement
