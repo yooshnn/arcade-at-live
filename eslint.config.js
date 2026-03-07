@@ -12,6 +12,7 @@ export default antfu({
     'no-empty-pattern': ['warn', { allowObjectPatternsAsParameters: true }],
     'ts/no-use-before-define': 'off',
     'react-refresh/only-export-components': 'off',
+    'e18e/prefer-array-to-sorted': 'off',
   },
   ignores: [
     '.wrangler/**',
