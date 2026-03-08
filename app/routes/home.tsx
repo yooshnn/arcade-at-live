@@ -1,4 +1,8 @@
 import type { Route } from './+types/home';
+import { GearSixIcon } from '@phosphor-icons/react';
+import { data, Link } from 'react-router';
+import { getArcades } from '~/features/arcade/arcade.server';
+import { Button } from '~/shared/ui/button';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -7,10 +11,53 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function Home() {
+export async function loader({ context }: Route.LoaderArgs) {
+  const { env } = context.cloudflare;
+  const arcades = await getArcades(env.DB, env.YOUTUBE_CACHE);
+  return data({ arcades });
+}
+
+export default function HomePage({ loaderData }: Route.ComponentProps) {
+  const { arcades } = loaderData;
+
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <h1 className="font-bold text-3xl">Hello, world!</h1>
+    <div className="min-h-screen bg-bg text-label antialiased">
+      <header className="sticky top-0 z-50 bg-bg/80 backdrop-blur-md">
+        <div className="h-16 flex items-center gap-4 px-6 border-b border-line">
+          <span className="min-w-0 flex-1 truncate text-base font-black tracking-wide">
+            ARCADE@LIVE
+          </span>
+
+          <Button render={<Link to="/settings" />} nativeButton={false} variant="ghost" rounded="full" icon>
+            <GearSixIcon />
+          </Button>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-lg px-6 py-8">
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-label-assistive">
+          오락실
+          {' '}
+          {arcades.length}
+        </p>
+
+        <div className="flex flex-col">
+          {arcades.map(arcade => (
+            <Link
+              key={arcade.id}
+              to={`/${arcade.slug}`}
+              className="group flex items-center justify-between gap-3 border-b border-line py-3.5 transition-[padding] first:border-t hover:pl-1.5"
+            >
+              <span className="text-sm font-medium text-label-neutral transition-colors group-hover:text-label">
+                {arcade.name}
+              </span>
+              <span className="shrink-0 text-sm text-label-disable transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-primary">
+                →
+              </span>
+            </Link>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }

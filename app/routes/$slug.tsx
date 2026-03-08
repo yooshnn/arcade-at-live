@@ -6,7 +6,7 @@ import { StreamGrid } from '~/features/stream/components/StreamGrid';
 import { filterStreamsByGameId, useGameTabs } from '~/features/stream/hooks';
 import { getActiveStreamsByArcadeId } from '~/features/stream/stream.server';
 import { queryGamesByArcadeId } from '~/server/db/game.queries';
-import { LinkButton } from '~/shared/ui/button';
+import { Button } from '~/shared/ui/button';
 import { EmptyState } from '~/shared/ui/EmptyState';
 import { Tabs } from '~/shared/ui/tabs';
 
@@ -34,18 +34,18 @@ export default function ArcadeStreamPage({ loaderData }: Route.ComponentProps) {
   return (
     <div className="min-h-screen bg-bg text-label antialiased">
       <header className="sticky top-0 z-50 bg-bg/80 backdrop-blur-md">
-        <div className="h-16 flex items-center gap-4 px-6 border-b border-line">
+        <div className="h-16 flex items-center px-6 border-b border-line">
           <Link
             to="/"
-            className="flex shrink-0 items-center gap-1.5 text-sm text-label-neutral transition-colors hover:text-label"
+            className="flex items-center gap-1.5 py-6 px-2 text-sm text-label-neutral hover:text-white"
           >
             <CaretLeftIcon />
             홈
           </Link>
 
-          <div className="h-5 w-px shrink-0 bg-line" />
+          <div className="h-5 w-px shrink-0 bg-line mx-2" />
 
-          <span className="min-w-0 flex-1 truncate text-base font-black tracking-wide">
+          <span className="min-w-0 flex-1 truncate text-base font-black tracking-wide px-2">
             {arcade.name}
           </span>
 
@@ -65,7 +65,7 @@ export default function ArcadeStreamPage({ loaderData }: Route.ComponentProps) {
           <EmptyState
             icon={<CactusIcon />}
             message="라이브 스트림을 찾지 못했습니다."
-            action={<LinkButton render={<Link to="/" />}>돌아가기</LinkButton>}
+            action={<Button render={<Link to="/" />} nativeButton={false}>돌아가기</Button>}
           />
         )}
         {hasSelectedStreams && (

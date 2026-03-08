@@ -7,16 +7,15 @@ import * as React from 'react';
 import { cn } from '~/shared/utils';
 
 const baseStyles
-  = 'inline-flex items-center justify-center whitespace-nowrap outline-none ring-ring focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0';
+  = 'inline-flex items-center justify-center whitespace-nowrap outline-none ring-primary focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0';
 
 export const buttonVariants = cva('gap-2 text-sm transition-all ease-out [&_svg]:size-4', {
   variants: {
     variant: {
       default: 'bg-primary text-black hover:bg-primary/80',
-      outline: 'border border-border bg-background hover:bg-muted hover:text-foreground',
-      secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-      ghost: 'hover:bg-muted hover:text-foreground',
-      destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+      outline: 'border border-line bg-bg hover:bg-bg-elevated hover:text-label',
+      secondary: 'bg-bg-elevated text-label-neutral hover:bg-line hover:text-label',
+      ghost: 'hover:bg-white/20',
     },
     rounded: {
       default: 'rounded-md',
