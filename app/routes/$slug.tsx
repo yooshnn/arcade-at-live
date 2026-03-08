@@ -3,6 +3,7 @@ import { CactusIcon, CaretLeftIcon } from '@phosphor-icons/react';
 import { data, Link } from 'react-router';
 import { getArcadeBySlug } from '~/features/arcade/arcade.server';
 import { getGamesByArcadeId } from '~/features/game/game.server';
+import { getSettings } from '~/features/settings/settings.server';
 import { StreamGrid } from '~/features/stream/components/StreamGrid';
 import { filterStreamsByGameId, useGameTabs } from '~/features/stream/hooks';
 import { getActiveStreamsByArcadeId } from '~/features/stream/stream.server';
@@ -10,18 +11,23 @@ import { Button } from '~/shared/ui/button';
 import { EmptyState } from '~/shared/ui/EmptyState';
 import { Tabs } from '~/shared/ui/tabs';
 
-export async function loader({ params, context }: Route.LoaderArgs) {
+export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { env } = context.cloudflare;
   const { slug } = params;
 
   const arcade = await getArcadeBySlug(env.DB, env.CACHE, slug);
 
-  const [streams, games] = await Promise.all([
+  const [streams, games, settings] = await Promise.all([
     getActiveStreamsByArcadeId(env.DB, env.CACHE, arcade.id),
     getGamesByArcadeId(env.DB, env.CACHE, arcade.id),
+    getSettings(request),
   ]);
 
-  return data({ arcade, streams, games });
+  const filteredGames = settings.selectedGameIds.length > 0
+    ? games.filter(g => settings.selectedGameIds.includes(g.id))
+    : games;
+
+  return data({ arcade, streams, games: filteredGames });
 }
 
 export default function ArcadeStreamPage({ loaderData }: Route.ComponentProps) {

@@ -1,7 +1,8 @@
 import type { Route } from './+types/home';
-import { GearSixIcon } from '@phosphor-icons/react';
+import { ArrowRightIcon, GearSixIcon } from '@phosphor-icons/react';
 import { data, Link } from 'react-router';
 import { getArcades } from '~/features/arcade/arcade.server';
+import { getSettings } from '~/features/settings/settings.server';
 import { Button } from '~/shared/ui/button';
 
 export function meta({}: Route.MetaArgs) {
@@ -11,10 +12,19 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function loader({ context }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
   const { env } = context.cloudflare;
-  const arcades = await getArcades(env.DB, env.CACHE);
-  return data({ arcades });
+
+  const [arcades, settings] = await Promise.all([
+    getArcades(env.DB, env.CACHE),
+    getSettings(request),
+  ]);
+
+  const filteredArcades = settings.selectedArcadeIds.length > 0
+    ? arcades.filter(a => settings.selectedArcadeIds.includes(a.id))
+    : arcades;
+
+  return data({ arcades: filteredArcades });
 }
 
 export default function HomePage({ loaderData }: Route.ComponentProps) {
@@ -46,13 +56,13 @@ export default function HomePage({ loaderData }: Route.ComponentProps) {
             <Link
               key={arcade.id}
               to={`/${arcade.slug}`}
-              className="group flex items-center justify-between gap-3 border-b border-line py-3.5 transition-[padding] first:border-t hover:pl-1.5"
+              className="group flex items-center justify-between gap-3 border-b border-line py-3.5 transition-[padding] first:border-t"
             >
-              <span className="text-sm font-medium text-label-neutral transition-colors group-hover:text-label">
+              <span className="text-sm font-medium text-label transition-colors group-hover:text-primary">
                 {arcade.name}
               </span>
-              <span className="shrink-0 text-sm text-label-disable transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-primary">
-                →
+              <span className="shrink-0 text-sm text-label-neutral transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-primary">
+                <ArrowRightIcon />
               </span>
             </Link>
           ))}
