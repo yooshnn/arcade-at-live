@@ -1,6 +1,6 @@
 import type { Route } from './+types/$slug';
-import { CactusIcon, CaretLeftIcon } from '@phosphor-icons/react';
-import { data, Link } from 'react-router';
+import { CactusIcon, CaretLeftIcon, WarningCircleIcon } from '@phosphor-icons/react';
+import { data, isRouteErrorResponse, Link, useRouteError } from 'react-router';
 import { getArcadeBySlug } from '~/features/arcade/arcade.server';
 import { getGamesByArcadeId } from '~/features/game/game.server';
 import { getSettings } from '~/features/settings/settings.server';
@@ -17,7 +17,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
   const arcade = await getArcadeBySlug(env.DB, env.CACHE, slug);
 
-  const [streams, games, settings] = await Promise.all([
+  const [{ streams, scrapeFailed }, games, settings] = await Promise.all([
     getActiveStreamsByArcadeId(env.DB, env.CACHE, arcade.id),
     getGamesByArcadeId(env.DB, env.CACHE, arcade.id),
     getSettings(request),
@@ -27,11 +27,40 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     ? games.filter(g => settings.selectedGameIds.includes(g.id))
     : games;
 
-  return data({ arcade, streams, games: filteredGames });
+  return data({ arcade, streams, games: filteredGames, scrapeFailed });
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const is404 = isRouteErrorResponse(error) && error.status === 404;
+
+  return (
+    <div className="min-h-screen bg-bg text-label antialiased">
+      <header className="sticky top-0 z-50 bg-bg/80 backdrop-blur-md">
+        <div className="h-16 flex items-center px-6 border-b border-line">
+          <Link
+            to="/"
+            className="flex items-center gap-1.5 py-6 px-2 text-sm text-label-neutral hover:text-white"
+          >
+            <CaretLeftIcon />
+            홈
+          </Link>
+        </div>
+      </header>
+
+      <main className="p-6 pb-12">
+        <EmptyState
+          icon={is404 ? <CactusIcon /> : <WarningCircleIcon />}
+          message={is404 ? '존재하지 않는 오락실입니다.' : '오류가 발생했습니다.'}
+          action={<Button render={<Link to="/" />} nativeButton={false}>홈으로</Button>}
+        />
+      </main>
+    </div>
+  );
 }
 
 export default function ArcadeStreamPage({ loaderData }: Route.ComponentProps) {
-  const { arcade, streams, games } = loaderData;
+  const { arcade, streams, games, scrapeFailed } = loaderData;
 
   const { tabItems, handleSelect, activeGameId } = useGameTabs(games, streams);
   const selectedStreams = filterStreamsByGameId(streams, activeGameId);
@@ -69,8 +98,10 @@ export default function ArcadeStreamPage({ loaderData }: Route.ComponentProps) {
       <main className="p-6 pb-12">
         {!hasSelectedStreams && (
           <EmptyState
-            icon={<CactusIcon />}
-            message="라이브 스트림을 찾지 못했습니다."
+            icon={scrapeFailed ? <WarningCircleIcon /> : <CactusIcon />}
+            message={scrapeFailed
+              ? '방송 정보를 불러오지 못했습니다.'
+              : '현재 방송 중인 스트림이 없습니다.'}
             action={<Button render={<Link to="/" />} nativeButton={false}>돌아가기</Button>}
           />
         )}

@@ -1,4 +1,4 @@
-import type { MatchedStream } from './types';
+import type { ActiveStreamsResult, MatchedStream } from './types';
 import type { StreamRule } from '~/server/db/schema';
 import type { LiveStreamInfo } from '~/server/youtube';
 import { getChannelsByArcadeId, getStreamRulesByArcadeId } from '~/features/arcade/arcade.server';
@@ -27,7 +27,7 @@ export async function getActiveStreamsByArcadeId(
   db: D1Database,
   kv: KVNamespace,
   arcadeId: number,
-): Promise<MatchedStream[]> {
+): Promise<ActiveStreamsResult> {
   const [channels, rules] = await Promise.all([
     getChannelsByArcadeId(db, kv, arcadeId),
     getStreamRulesByArcadeId(db, kv, arcadeId),
@@ -36,15 +36,14 @@ export async function getActiveStreamsByArcadeId(
   let streams = await getCachedStreams(kv, arcadeId);
   if (!streams) {
     const fetchedStreams = await getLiveStreamsFromChannels(channels.map(c => c.youtube_channel_id));
-    
-    // If fetching failed (null), do not cache and return empty array for now
+
     if (fetchedStreams === null) {
-      return [];
+      return { streams: [], scrapeFailed: true };
     }
-    
+
     streams = fetchedStreams;
     await setCachedStreams(kv, arcadeId, streams);
   }
 
-  return matchStreams(streams, rules);
+  return { streams: matchStreams(streams, rules), scrapeFailed: false };
 }
