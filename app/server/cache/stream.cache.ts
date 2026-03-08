@@ -1,19 +1,10 @@
+import type { LiveStreamInfo } from '../youtube';
+import { createCache } from './utils';
+
 const TTL = 60 * 10; // 10m
 
-function key(arcadeId: number): string {
-  return `streams:${arcadeId}`;
-}
+export const YouTubeStreamsCache = createCache<LiveStreamInfo[]>((arcadeId: number) => `youtube:streams:${arcadeId}`, TTL);
 
-// TODO: Replace T with a specific type
-
-export async function getCachedStreams<T>(kv: KVNamespace, arcadeId: number): Promise<T | null> {
-  return kv.get<T>(key(arcadeId), 'json');
-}
-
-export async function setCachedStreams<T>(kv: KVNamespace, arcadeId: number, data: T): Promise<void> {
-  await kv.put(key(arcadeId), JSON.stringify(data), { expirationTtl: TTL });
-}
-
-export async function invalidateCachedStreams(kv: KVNamespace, arcadeId: number): Promise<void> {
-  await kv.delete(key(arcadeId));
-}
+export const getCachedStreams = (kv: KVNamespace, arcadeId: number) => YouTubeStreamsCache.get(kv, arcadeId);
+export const setCachedStreams = (kv: KVNamespace, arcadeId: number, data: LiveStreamInfo[]) => YouTubeStreamsCache.set(kv, data, arcadeId);
+export const invalidateCachedStreams = (kv: KVNamespace, arcadeId: number) => YouTubeStreamsCache.invalidate(kv, arcadeId);

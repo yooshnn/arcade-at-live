@@ -13,7 +13,7 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ context }: Route.LoaderArgs) {
   const { env } = context.cloudflare;
-  const arcades = await getArcades(env.DB, env.YOUTUBE_CACHE);
+  const arcades = await getArcades(env.DB, env.CACHE);
   return data({ arcades });
 }
 

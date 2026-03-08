@@ -1,13 +1,9 @@
+import type { MatchedStream } from './types';
 import type { StreamRule } from '~/server/db/schema';
 import type { LiveStreamInfo } from '~/server/youtube';
+import { getChannelsByArcadeId, getStreamRulesByArcadeId } from '~/features/arcade/arcade.server';
 import { getCachedStreams, setCachedStreams } from '~/server/cache/stream.cache';
-import { queryChannelsByArcadeId, queryStreamRulesByArcadeId } from '~/server/db/arcade.queries';
 import { getLiveStreamsFromChannels } from '~/server/youtube';
-
-export interface MatchedStream extends LiveStreamInfo {
-  gameId: number;
-  machineLabel: string | null;
-}
 
 function matchStreams(streams: LiveStreamInfo[], rules: StreamRule[]): MatchedStream[] {
   const matched: MatchedStream[] = [];
@@ -32,18 +28,16 @@ export async function getActiveStreamsByArcadeId(
   kv: KVNamespace,
   arcadeId: number,
 ): Promise<MatchedStream[]> {
-  const cached = await getCachedStreams<MatchedStream[]>(kv, arcadeId);
-  if (cached)
-    return cached;
-
   const [channels, rules] = await Promise.all([
-    queryChannelsByArcadeId(db, arcadeId),
-    queryStreamRulesByArcadeId(db, arcadeId),
+    getChannelsByArcadeId(db, kv, arcadeId),
+    getStreamRulesByArcadeId(db, kv, arcadeId),
   ]);
 
-  const streams = await getLiveStreamsFromChannels(channels.map(c => c.youtube_channel_id));
-  const matched = matchStreams(streams, rules);
+  let streams = await getCachedStreams(kv, arcadeId);
+  if (!streams) {
+    streams = await getLiveStreamsFromChannels(channels.map(c => c.youtube_channel_id));
+    await setCachedStreams(kv, arcadeId, streams);
+  }
 
-  await setCachedStreams(kv, arcadeId, matched);
-  return matched;
+  return matchStreams(streams, rules);
 }

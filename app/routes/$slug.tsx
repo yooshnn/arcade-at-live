@@ -2,10 +2,10 @@ import type { Route } from './+types/$slug';
 import { CactusIcon, CaretLeftIcon } from '@phosphor-icons/react';
 import { data, Link } from 'react-router';
 import { getArcadeBySlug } from '~/features/arcade/arcade.server';
+import { getGamesByArcadeId } from '~/features/game/game.server';
 import { StreamGrid } from '~/features/stream/components/StreamGrid';
 import { filterStreamsByGameId, useGameTabs } from '~/features/stream/hooks';
 import { getActiveStreamsByArcadeId } from '~/features/stream/stream.server';
-import { queryGamesByArcadeId } from '~/server/db/game.queries';
 import { Button } from '~/shared/ui/button';
 import { EmptyState } from '~/shared/ui/EmptyState';
 import { Tabs } from '~/shared/ui/tabs';
@@ -14,11 +14,11 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   const { env } = context.cloudflare;
   const { slug } = params;
 
-  const arcade = await getArcadeBySlug(env.DB, slug);
+  const arcade = await getArcadeBySlug(env.DB, env.CACHE, slug);
 
   const [streams, games] = await Promise.all([
-    getActiveStreamsByArcadeId(env.DB, env.YOUTUBE_CACHE, arcade.id),
-    queryGamesByArcadeId(env.DB, arcade.id),
+    getActiveStreamsByArcadeId(env.DB, env.CACHE, arcade.id),
+    getGamesByArcadeId(env.DB, env.CACHE, arcade.id),
   ]);
 
   return data({ arcade, streams, games });

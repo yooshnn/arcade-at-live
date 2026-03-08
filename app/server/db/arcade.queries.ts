@@ -2,7 +2,7 @@ import type { Arcade, Channel, StreamRule } from './schema';
 
 export async function queryArcades(db: D1Database): Promise<Arcade[]> {
   const result = await db
-    .prepare('SELECT * FROM arcades WHERE is_closed = 0')
+    .prepare('SELECT * FROM arcades WHERE is_closed = 0 ORDER BY name ASC')
     .all<Arcade>();
   return result.results;
 }

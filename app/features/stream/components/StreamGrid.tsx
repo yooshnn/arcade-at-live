@@ -1,4 +1,4 @@
-import type { MatchedStream } from '../stream.server';
+import type { MatchedStream } from '../types';
 import { Link } from 'react-router';
 import { cn } from '~/shared/utils';
 

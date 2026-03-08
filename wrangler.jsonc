@@ -22,7 +22,7 @@
   ],
   "kv_namespaces": [
     {
-      "binding": "YOUTUBE_CACHE",
+      "binding": "CACHE",
       "id": "fd82c1b92dcd440cb2bb6ab8e9da32f6"
     }
   ]
