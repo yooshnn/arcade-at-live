@@ -7,8 +7,7 @@ import { Button } from '~/shared/ui/button';
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: 'New React Router App' },
-    { name: 'description', content: 'Welcome to React Router!' },
+    { title: 'ARCADE@LIVE' },
   ];
 }
 

@@ -6,6 +6,12 @@ import { getArcades } from '~/features/arcade/arcade.server';
 import { getGames } from '~/features/game/game.server';
 import { getSettings, serializeSettings } from '~/features/settings/settings.server';
 
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: '설정 / ARCADE@LIVE' },
+  ];
+}
+
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { env } = context.cloudflare;
 

@@ -11,6 +11,19 @@ import { Button } from '~/shared/ui/button';
 import { EmptyState } from '~/shared/ui/EmptyState';
 import { Tabs } from '~/shared/ui/tabs';
 
+export function meta({ data }: Route.MetaArgs) {
+  if (!data?.arcade) {
+    return [
+      { title: '오류 | ARCADE@LIVE' },
+      { name: 'description', content: '오락실 정보를 불러올 수 없습니다.' },
+    ];
+  }
+
+  return [
+    { title: `${data.arcade.name} | ARCADE@LIVE` },
+  ];
+}
+
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { env } = context.cloudflare;
   const { slug } = params;
