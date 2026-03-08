@@ -35,7 +35,14 @@ export async function getActiveStreamsByArcadeId(
 
   let streams = await getCachedStreams(kv, arcadeId);
   if (!streams) {
-    streams = await getLiveStreamsFromChannels(channels.map(c => c.youtube_channel_id));
+    const fetchedStreams = await getLiveStreamsFromChannels(channels.map(c => c.youtube_channel_id));
+    
+    // If fetching failed (null), do not cache and return empty array for now
+    if (fetchedStreams === null) {
+      return [];
+    }
+    
+    streams = fetchedStreams;
     await setCachedStreams(kv, arcadeId, streams);
   }
 

@@ -4,16 +4,17 @@ import { extractVideoRenderers, extractYtInitialData, isLiveRenderer, resolveTit
 /**
  * Collects a list of active live streams for a single channel.
  * @param channelId The YouTube channel ID
- * @returns An array of LiveStreamInfo objects
+ * @returns An array of LiveStreamInfo objects, or null if scraping failed
  */
-export async function getLiveStreamsFromChannel(channelId: string): Promise<LiveStreamInfo[]> {
+export async function getLiveStreamsFromChannel(channelId: string): Promise<LiveStreamInfo[] | null> {
   try {
     const html = await fetchChannelFeaturedPage(channelId);
 
     // Parse
     const data = extractYtInitialData(html);
     if (!data) {
-      return [];
+      console.warn(`[Scraper] Failed to extract ytInitialData from ${channelId}`);
+      return null;
     }
 
     // Extract
@@ -42,18 +43,25 @@ export async function getLiveStreamsFromChannel(channelId: string): Promise<Live
   }
   catch (error) {
     console.error(`Error scraping channel ${channelId}:`, error);
-    return [];
+    return null;
   }
 }
 
 /**
  * Collects live streams from multiple channels in parallel.
  * @param channelIds An array of YouTube channel IDs
- * @returns A flattened array of LiveStreamInfo objects
+ * @returns A flattened array of LiveStreamInfo objects, or null if any scraper fails
  */
-export async function getLiveStreamsFromChannels(channelIds: string[]): Promise<LiveStreamInfo[]> {
+export async function getLiveStreamsFromChannels(channelIds: string[]): Promise<LiveStreamInfo[] | null> {
   const results = await Promise.all(channelIds.map(getLiveStreamsFromChannel));
-  return results.flat();
+
+  // If any channel failed to scrape, we return null to prevent poisoning the cache
+  // with partial data or empty arrays.
+  if (results.includes(null)) {
+    return null;
+  }
+
+  return (results as LiveStreamInfo[][]).flat();
 }
 
 /**
