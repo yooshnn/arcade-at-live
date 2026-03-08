@@ -15,6 +15,8 @@ import { Button } from '~/shared/ui/button';
 import { EmptyState } from '~/shared/ui/EmptyState';
 import './app.css';
 
+declare const __COMMIT_SHA__: string;
+
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
@@ -47,7 +49,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <footer className="border-t border-line px-6 py-4 flex items-center justify-end">
+        <span className="font-mono text-xs text-label-disable">
+          ARCADE@LIVE
+          {' '}
+          {__COMMIT_SHA__}
+        </span>
+      </footer>
+    </>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
