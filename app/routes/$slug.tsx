@@ -1,7 +1,8 @@
 import type { Route } from './+types/$slug';
-import { useRef } from 'react';
-import { data, useNavigate, useSearchParams } from 'react-router';
+import { data } from 'react-router';
 import { getArcadeBySlug } from '~/features/arcade/arcade.server';
+import { filterStreamsByGameId, useGameTabs } from '~/features/stream/hooks';
+import { Tabs } from '~/shared/ui/tabs';
 import { getActiveStreamsByArcadeId } from '~/features/stream/stream.server';
 import { queryGamesByArcadeId } from '~/server/db/game.queries';
 
@@ -36,41 +37,9 @@ function StreamIframe({ src }: { src: string }) {
 export default function DummyPage({ loaderData }: Route.ComponentProps) {
   const { arcade, streams, games } = loaderData;
 
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const tabsRef = useRef<HTMLElement>(null);
-
-  const selectedGameSlug = searchParams.get('game');
-  const activeGame = games.find(game => game.slug === selectedGameSlug) ?? games[0] ?? null;
-  const activeGameId = activeGame?.id ?? null;
-  const activeStreams = streams.filter(stream => stream.gameId === activeGameId);
-
-  const streamCountByGameId = new Map<number, number>();
-
-  for (const stream of streams) {
-    streamCountByGameId.set(
-      stream.gameId,
-      (streamCountByGameId.get(stream.gameId) ?? 0) + 1,
-    );
-  }
-
-  function moveToGameTab(gameSlug: string) {
-    navigate(`?game=${gameSlug}`);
-  }
-
-  function handleTabsWheel(event: React.WheelEvent<HTMLElement>) {
-    if (event.deltaY === 0) {
-      return;
-    }
-
-    event.preventDefault();
-    tabsRef.current?.scrollBy({
-      left: event.deltaY,
-      behavior: 'smooth',
-    });
-  }
-
-  const hasActiveStreams = activeStreams.length > 0;
+  const { tabItems, handleSelect, activeGameId } = useGameTabs(games, streams);
+  const selectedStreams = filterStreamsByGameId(streams, activeGameId);
+  const hasSelectedStreams = selectedStreams.length > 0;
 
   return (
     <div className="min-h-screen bg-bg text-label antialiased">
@@ -108,58 +77,19 @@ export default function DummyPage({ loaderData }: Route.ComponentProps) {
         </div>
       </header>
 
-      <nav
-        ref={tabsRef}
-        onWheel={handleTabsWheel}
-        className="flex gap-0.5 overflow-x-auto border-b border-line px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {games.map((game) => {
-          const streamCount = streamCountByGameId.get(game.id) ?? 0;
-          const isActive = game.id === activeGameId;
-
-          const tabClassName = [
-            'relative shrink-0 px-4 py-3.5 text-sm font-bold uppercase tracking-widest transition-colors',
-            'after:absolute after:-bottom-px after:left-0 after:right-0 after:h-0.5',
-            isActive
-              ? 'text-primary after:bg-primary'
-              : 'text-label-assistive after:bg-transparent hover:text-label',
-          ].join(' ');
-
-          const badgeClassName = [
-            'ml-1.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded px-1 font-mono text-[10px] font-bold',
-            isActive
-              ? 'bg-primary-dim text-primary'
-              : 'bg-line text-label-assistive',
-          ].join(' ');
-
-          return (
-            <button
-              key={game.id}
-              onClick={() => moveToGameTab(game.slug)}
-              className={tabClassName}
-            >
-              {game.alias}
-              {streamCount > 0 && (
-                <span className={badgeClassName}>
-                  {streamCount}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
+      <Tabs items={tabItems} activeKey={activeGameId} onSelect={handleSelect} />
 
       <main className="p-6">
-        {!hasActiveStreams && (
+        {!hasSelectedStreams && (
           <div className="py-20 text-center text-label-assistive">
             <div className="mb-4 text-4xl opacity-40">📺</div>
             <p className="text-sm">현재 방송 중인 스트림이 없습니다.</p>
           </div>
         )}
 
-        {hasActiveStreams && (
+        {hasSelectedStreams && (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] gap-4">
-            {activeStreams.map((stream) => {
+            {selectedStreams.map((stream) => {
               const streamKey = `${activeGameId}-${stream.videoId}`;
 
               const machineLabelClassName = [
