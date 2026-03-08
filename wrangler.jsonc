@@ -25,6 +25,12 @@
       "binding": "CACHE",
       "id": "fd82c1b92dcd440cb2bb6ab8e9da32f6"
     }
+  ],
+  "routes": [
+    {
+      "pattern": "al.cupya.me",
+      "custom_domain": true
+    }
   ]
   /**
    * Smart Placement

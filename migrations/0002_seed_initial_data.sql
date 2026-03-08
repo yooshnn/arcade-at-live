@@ -1,7 +1,5 @@
 -- Migration number: 0002 	 2026-03-07T07:40:24.603Z
 
-BEGIN TRANSACTION;
-
 INSERT OR IGNORE INTO games (id, name, alias, slug) VALUES
   (1, 'CHUNITHM', '츄니즘', 'chunithm'),
   (2, 'SOUND VOLTEX', 'SDVX', 'sdvx'),
@@ -74,5 +72,3 @@ INSERT OR IGNORE INTO stream_rules (arcade_id, game_id, keyword, machine_label, 
   (2, 11, '신 팝픈뮤직 팝군모델', 'PM', 0),
   (2, 11, '팝픈뮤직', '1', 10),
   (2, 12, '댄스러쉬', NULL, 0);
-
-COMMIT;
