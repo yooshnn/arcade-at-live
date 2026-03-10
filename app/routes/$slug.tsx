@@ -1,5 +1,5 @@
 import type { Route } from './+types/$slug';
-import { CactusIcon, CaretLeftIcon, WarningCircleIcon } from '@phosphor-icons/react';
+import { ArrowsClockwiseIcon, CactusIcon, CaretLeftIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { data, isRouteErrorResponse, Link, useRouteError } from 'react-router';
 import { getArcadeBySlug } from '~/features/arcade/arcade.server';
 import { getGamesByArcadeId } from '~/features/game/game.server';
@@ -30,7 +30,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
   const arcade = await getArcadeBySlug(env.DB, env.CACHE, slug);
 
-  const [{ streams, scrapeFailed }, games, settings] = await Promise.all([
+  const [{ streams, scrapeFailed, timestamp }, games, settings] = await Promise.all([
     getActiveStreamsByArcadeId(env.DB, env.CACHE, ctx.waitUntil.bind(ctx), arcade.id),
     getGamesByArcadeId(env.DB, env.CACHE, arcade.id),
     getSettings(request),
@@ -40,7 +40,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     ? games.filter(g => settings.selectedGameIds.includes(g.id))
     : games;
 
-  return data({ arcade, streams, games: filteredGames, scrapeFailed });
+  return data({ arcade, streams, games: filteredGames, scrapeFailed, timestamp });
 }
 
 export function ErrorBoundary() {
@@ -73,11 +73,17 @@ export function ErrorBoundary() {
 }
 
 export default function ArcadeStreamPage({ loaderData }: Route.ComponentProps) {
-  const { arcade, streams, games, scrapeFailed } = loaderData;
+  const { arcade, streams, games, scrapeFailed, timestamp } = loaderData;
 
   const { tabItems, handleSelect, activeGameId } = useGameTabs(games, streams);
   const selectedStreams = filterStreamsByGameId(streams, activeGameId);
   const hasSelectedStreams = selectedStreams.length > 0;
+
+  const updatedAt = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    hour: 'numeric',
+    minute: 'numeric',
+  }).format(timestamp);
 
   return (
     <div className="min-h-screen bg-bg text-label antialiased">
@@ -108,7 +114,12 @@ export default function ArcadeStreamPage({ loaderData }: Route.ComponentProps) {
         <Tabs items={tabItems} activeKey={activeGameId} onSelect={handleSelect} />
       </header>
 
-      <main className="p-6 pb-12">
+      <main className="flex flex-col gap-4 p-6 pb-12">
+        <div className="flex justify-end items-center gap-1 text-xs text-label-assistive">
+          <ArrowsClockwiseIcon />
+          {updatedAt}
+        </div>
+
         {!hasSelectedStreams && (
           <EmptyState
             icon={scrapeFailed ? <WarningCircleIcon /> : <CactusIcon />}

@@ -28,7 +28,7 @@ async function getLiveStreamsWithSWR(
   waitUntil: (promise: Promise<unknown>) => void,
   arcadeId: number,
   youtubeChannelIds: string[],
-): Promise<{ streams: LiveStreamInfo[]; scrapeFailed: boolean }> {
+): Promise<{ streams: LiveStreamInfo[]; scrapeFailed: boolean; timestamp: number }> {
   const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
   const now = Date.now();
   let cacheData = await getCachedStreams(kv, arcadeId);
@@ -37,7 +37,7 @@ async function getLiveStreamsWithSWR(
     const fetchedStreams = await getLiveStreamsFromChannels(youtubeChannelIds);
 
     if (fetchedStreams === null) {
-      return { streams: [], scrapeFailed: true };
+      return { streams: [], scrapeFailed: true, timestamp: now };
     }
 
     cacheData = { timestamp: now, streams: fetchedStreams };
@@ -58,7 +58,7 @@ async function getLiveStreamsWithSWR(
     }
   }
 
-  return { streams: cacheData.streams, scrapeFailed: false };
+  return { streams: cacheData.streams, scrapeFailed: false, timestamp: cacheData.timestamp };
 }
 
 export async function getActiveStreamsByArcadeId(
@@ -66,13 +66,13 @@ export async function getActiveStreamsByArcadeId(
   kv: KVNamespace,
   waitUntil: (promise: Promise<unknown>) => void,
   arcadeId: number,
-): Promise<ActiveStreamsResult> {
+): Promise<ActiveStreamsResult & { timestamp: number }> {
   const [channels, rules] = await Promise.all([
     getChannelsByArcadeId(db, kv, arcadeId),
     getStreamRulesByArcadeId(db, kv, arcadeId),
   ]);
 
-  const { streams, scrapeFailed } = await getLiveStreamsWithSWR(
+  const { streams, scrapeFailed, timestamp } = await getLiveStreamsWithSWR(
     kv,
     waitUntil,
     arcadeId,
@@ -83,11 +83,14 @@ export async function getActiveStreamsByArcadeId(
     return {
       streams: [],
       scrapeFailed: true,
+      timestamp,
     };
   }
 
   return {
     streams: matchStreams(streams, rules),
     scrapeFailed: false,
+    timestamp,
   };
 }
+
