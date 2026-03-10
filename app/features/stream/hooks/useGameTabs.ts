@@ -78,9 +78,22 @@ function buildStreamCountByGameId(streams: MatchedStream[]): Map<number, number>
 function buildGameTabItems(games: Game[], streams: MatchedStream[]): TabItem[] {
   const countByGameId = buildStreamCountByGameId(streams);
 
-  return games.map(game => ({
+  const items = games.map(game => ({
     key: game.id,
     label: game.alias,
     badge: countByGameId.get(game.id) ?? undefined,
   }));
+
+  return items.sort((a, b) => {
+    const aHasStreams = a.badge !== undefined;
+    const bHasStreams = b.badge !== undefined;
+
+    if (aHasStreams && !bHasStreams) {
+      return -1;
+    }
+    if (!aHasStreams && bHasStreams) {
+      return 1;
+    }
+    return 0;
+  });
 }
