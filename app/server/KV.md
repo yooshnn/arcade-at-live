@@ -23,6 +23,6 @@ Cloudflare KV(`CACHE`)에 저장하는 캐시 키와 TTL 정책 목록입니다.
 
 | 용도 | 캐시 키(Key) 명칭 | TTL | 설명 |
 |---|---|---|---|
-| 오락실 실시간 라이브 | `youtube:streams:{arcadeId}` | 10분 | 현재 오락실 채널들의 실시간 YouTube 스트리밍 원본(`LiveStreamInfo`) 상태 배열 |
+| 오락실 실시간 라이브 | `youtube:streams:v2:{arcadeId}` | 12시간 | 현재 오락실 채널들의 실시간 YouTube 스트리밍 원본을 포함한 객체(`StreamCacheData`) |
 
 > **참고**: 로컬 개발 환경에서 이 캐시들을 강제로 비우려면 `rm -rf .wrangler/state/v3/kv` 명령어를 실행하면 됩니다.

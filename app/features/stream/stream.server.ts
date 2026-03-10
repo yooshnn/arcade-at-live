@@ -23,9 +23,48 @@ function matchStreams(streams: LiveStreamInfo[], rules: StreamRule[]): MatchedSt
   return matched;
 }
 
+async function getLiveStreamsWithSWR(
+  kv: KVNamespace,
+  waitUntil: (promise: Promise<unknown>) => void,
+  arcadeId: number,
+  youtubeChannelIds: string[],
+): Promise<{ streams: LiveStreamInfo[]; scrapeFailed: boolean }> {
+  const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
+  const now = Date.now();
+  let cacheData = await getCachedStreams(kv, arcadeId);
+
+  if (!cacheData) {
+    const fetchedStreams = await getLiveStreamsFromChannels(youtubeChannelIds);
+
+    if (fetchedStreams === null) {
+      return { streams: [], scrapeFailed: true };
+    }
+
+    cacheData = { timestamp: now, streams: fetchedStreams };
+    await setCachedStreams(kv, arcadeId, cacheData);
+  }
+  else {
+    const isStale = now - cacheData.timestamp > REFRESH_INTERVAL;
+    if (isStale) {
+      waitUntil(
+        getLiveStreamsFromChannels(youtubeChannelIds)
+          .then(async (fetchedStreams) => {
+            if (fetchedStreams !== null) {
+              await setCachedStreams(kv, arcadeId, { timestamp: Date.now(), streams: fetchedStreams });
+            }
+          })
+          .catch(console.error),
+      );
+    }
+  }
+
+  return { streams: cacheData.streams, scrapeFailed: false };
+}
+
 export async function getActiveStreamsByArcadeId(
   db: D1Database,
   kv: KVNamespace,
+  waitUntil: (promise: Promise<unknown>) => void,
   arcadeId: number,
 ): Promise<ActiveStreamsResult> {
   const [channels, rules] = await Promise.all([
@@ -33,17 +72,22 @@ export async function getActiveStreamsByArcadeId(
     getStreamRulesByArcadeId(db, kv, arcadeId),
   ]);
 
-  let streams = await getCachedStreams(kv, arcadeId);
-  if (!streams) {
-    const fetchedStreams = await getLiveStreamsFromChannels(channels.map(c => c.youtube_channel_id));
+  const { streams, scrapeFailed } = await getLiveStreamsWithSWR(
+    kv,
+    waitUntil,
+    arcadeId,
+    channels.map(c => c.youtube_channel_id),
+  );
 
-    if (fetchedStreams === null) {
-      return { streams: [], scrapeFailed: true };
-    }
-
-    streams = fetchedStreams;
-    await setCachedStreams(kv, arcadeId, streams);
+  if (scrapeFailed) {
+    return {
+      streams: [],
+      scrapeFailed: true,
+    };
   }
 
-  return { streams: matchStreams(streams, rules), scrapeFailed: false };
+  return {
+    streams: matchStreams(streams, rules),
+    scrapeFailed: false,
+  };
 }

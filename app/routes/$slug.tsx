@@ -25,13 +25,13 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
-  const { env } = context.cloudflare;
+  const { env, ctx } = context.cloudflare;
   const { slug } = params;
 
   const arcade = await getArcadeBySlug(env.DB, env.CACHE, slug);
 
   const [{ streams, scrapeFailed }, games, settings] = await Promise.all([
-    getActiveStreamsByArcadeId(env.DB, env.CACHE, arcade.id),
+    getActiveStreamsByArcadeId(env.DB, env.CACHE, ctx.waitUntil.bind(ctx), arcade.id),
     getGamesByArcadeId(env.DB, env.CACHE, arcade.id),
     getSettings(request),
   ]);
