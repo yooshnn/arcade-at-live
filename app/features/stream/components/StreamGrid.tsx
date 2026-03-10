@@ -1,4 +1,4 @@
-import type { MatchedStream } from '../types';
+import type { MatchedStream } from '../services/types';
 import { Link } from 'react-router';
 import { cn } from '~/shared/utils';
 
@@ -30,7 +30,7 @@ function StreamCard({ stream }: StreamCardProps) {
 
       <div className="flex items-center justify-between gap-2 px-3.5 py-3">
         <span className={cn(
-          'font-mono text-sm font-medium',
+          'text-sm font-medium',
           stream.machineLabel ? 'text-label' : 'text-label-assistive',
         )}
         >

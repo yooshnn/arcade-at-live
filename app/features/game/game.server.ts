@@ -6,7 +6,15 @@ export async function getGames(db: D1Database): Promise<Game[]> {
   return queryGames(db);
 }
 
-export async function getGamesByArcadeId(db: D1Database, kv: KVNamespace, arcadeId: number): Promise<Game[]> {
+interface GetGamesByArcadeIdParams {
+  db: D1Database;
+  kv: KVNamespace;
+  arcadeId: number;
+}
+
+export async function getGamesByArcadeId(
+  { db, kv, arcadeId }: GetGamesByArcadeIdParams,
+): Promise<Game[]> {
   const cached = await getCachedGamesByArcadeId(kv, arcadeId);
   if (cached)
     return cached;

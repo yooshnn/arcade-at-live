@@ -1,4 +1,4 @@
-import type { MatchedStream } from '../types';
+import type { MatchedStream } from '../services/types';
 import type { Game } from '~/server/db/schema';
 import type { TabItem } from '~/shared/ui/tabs';
 import { useNavigate, useSearchParams } from 'react-router';

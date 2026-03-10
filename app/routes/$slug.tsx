@@ -5,22 +5,22 @@ import { getArcadeBySlug } from '~/features/arcade/arcade.server';
 import { getGamesByArcadeId } from '~/features/game/game.server';
 import { getSettings } from '~/features/settings/settings.server';
 import { StreamGrid } from '~/features/stream/components/StreamGrid';
-import { filterStreamsByGameId, useGameTabs } from '~/features/stream/hooks';
-import { getActiveStreamsByArcadeId } from '~/features/stream/stream.server';
+import { filterStreamsByGameId, useGameTabs } from '~/features/stream/hooks/useGameTabs';
+import { getActiveStreamsByArcadeId } from '~/features/stream/services/stream.server';
 import { Button } from '~/shared/ui/button';
 import { EmptyState } from '~/shared/ui/EmptyState';
 import { Tabs } from '~/shared/ui/tabs';
 
-export function meta({ data }: Route.MetaArgs) {
-  if (!data?.arcade) {
+export function meta({ loaderData }: Route.MetaArgs) {
+  if (!loaderData?.arcade) {
     return [
-      { title: '오류 | ARCADE@LIVE' },
+      { title: 'ARCADE@LIVE' },
       { name: 'description', content: '오락실 정보를 불러올 수 없습니다.' },
     ];
   }
 
   return [
-    { title: `${data.arcade.name} | ARCADE@LIVE` },
+    { title: `${loaderData.arcade.name} | ARCADE@LIVE` },
   ];
 }
 
@@ -31,8 +31,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const arcade = await getArcadeBySlug(env.DB, env.CACHE, slug);
 
   const [{ streams, scrapeFailed, timestamp }, games, settings] = await Promise.all([
-    getActiveStreamsByArcadeId(env.DB, env.CACHE, ctx.waitUntil.bind(ctx), arcade.id),
-    getGamesByArcadeId(env.DB, env.CACHE, arcade.id),
+    getActiveStreamsByArcadeId({ db: env.DB, kv: env.CACHE, ctx, arcadeId: arcade.id }),
+    getGamesByArcadeId({ db: env.DB, kv: env.CACHE, arcadeId: arcade.id }),
     getSettings(request),
   ]);
 
