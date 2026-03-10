@@ -15,8 +15,9 @@ export function useGameTabs(games: Game[], streams: MatchedStream[]) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const activeGameId = resolveActiveGameId(games, searchParams.get('game'));
-  const tabItems = buildGameTabItems(games, streams);
+  const countByGameId = buildStreamCountByGameId(streams);
+  const activeGameId = resolveActiveGameId(games, searchParams.get('game'), countByGameId);
+  const tabItems = buildGameTabItems(games, countByGameId);
 
   function handleSelect(key: string | number) {
     const game = games.find(g => g.id === key);
@@ -50,7 +51,11 @@ export function filterStreamsByGameId(
 
 // Private helpers
 
-function resolveActiveGameId(games: Game[], slug: string | null): number | null {
+function resolveActiveGameId(
+  games: Game[],
+  slug: string | null,
+  countByGameId: Map<number, number>,
+): number | null {
   if (!games.length) {
     return null;
   }
@@ -62,7 +67,8 @@ function resolveActiveGameId(games: Game[], slug: string | null): number | null 
     }
   }
 
-  return games[0].id;
+  const firstGameWithStreams = games.find(g => countByGameId.has(g.id));
+  return firstGameWithStreams ? firstGameWithStreams.id : games[0].id;
 }
 
 function buildStreamCountByGameId(streams: MatchedStream[]): Map<number, number> {
@@ -75,9 +81,10 @@ function buildStreamCountByGameId(streams: MatchedStream[]): Map<number, number>
   return countByGameId;
 }
 
-function buildGameTabItems(games: Game[], streams: MatchedStream[]): TabItem[] {
-  const countByGameId = buildStreamCountByGameId(streams);
-
+function buildGameTabItems(
+  games: Game[],
+  countByGameId: Map<number, number>,
+): TabItem[] {
   const items = games.map(game => ({
     key: game.id,
     label: game.alias,
