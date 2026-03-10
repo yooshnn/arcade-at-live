@@ -46,7 +46,13 @@ export function filterStreamsByGameId(
   streams: MatchedStream[],
   gameId: number | null,
 ) {
-  return streams.filter(stream => stream.gameId === gameId);
+  return streams
+    .filter(stream => stream.gameId === gameId)
+    .sort((a, b) => {
+      const labelA = a.machineLabel || '';
+      const labelB = b.machineLabel || '';
+      return labelA.localeCompare(labelB, undefined, { numeric: true });
+    });
 }
 
 // Private helpers
