@@ -8,12 +8,17 @@ async function fetchAndCacheStreams(
   kv: KVNamespace,
   arcadeId: number,
   youtubeChannelIds: string[],
+  oldStreams?: LiveStreamInfo[],
 ): Promise<{ streams: LiveStreamInfo[] | null; timestamp: number }> {
   const fetchedStreams = await getLiveStreamsFromChannels(youtubeChannelIds);
   const now = Date.now();
 
   if (fetchedStreams) {
     await setCachedStreams(kv, arcadeId, { timestamp: now, streams: fetchedStreams });
+  }
+  else if (oldStreams) {
+    // update the timestamp to prevent retry loops
+    await setCachedStreams(kv, arcadeId, { timestamp: now, streams: oldStreams });
   }
 
   return { streams: fetchedStreams, timestamp: now };
@@ -43,10 +48,13 @@ export async function getLiveStreamsWithSWR(
     const isCacheStale = now - cacheData.timestamp > STALE_TIME_MS;
 
     if (isCacheStale) {
+      // Update the timestamp early to stop other users from triggering the scrape at the same time
+      ctx.waitUntil(setCachedStreams(kv, arcadeId, { timestamp: now, streams: cacheData.streams }).catch(() => {}));
+
       ctx.waitUntil(
-        fetchAndCacheStreams(kv, arcadeId, channelIds).catch((err) => {
+        fetchAndCacheStreams(kv, arcadeId, channelIds, cacheData.streams).catch((err) => {
           console.error('Background cache update failed:', err);
-        })
+        }),
       );
     }
 
